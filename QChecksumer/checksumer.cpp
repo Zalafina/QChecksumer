@@ -6,7 +6,7 @@ QString Checksumer::m_filepath = QString();
 QList<Split_st> Checksumer::m_splitlist = QList<Split_st>();
 quint8 Checksumer::m_status = Checksumer::CHECKSUMER_IDLE;
 
-static const quint32 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024);
+static const quint32 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024 * 2);
 static const quint32 EVERY_SPLIT_SIZE_LARGE = (1024 * 1024 * 10);
 
 #define split_roundup(x,n) ((x+n-1)/n)
@@ -121,8 +121,15 @@ void Checksumer::ChecksumProcesser()
 //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
 //        }
 
+        int mapReduceTime = 0;
+        QTime time;
+        time.start();
+
         quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
         emit Checksumer_ChecksumResultSignal(final_checksum);
+
+        mapReduceTime = time.elapsed();
+        qDebug() << "MapReduce" << mapReduceTime;
 #ifdef DEBUG_LOGOUT_ON
         qDebug("Final result.checksum(0x%X)", final_checksum);
 #endif
