@@ -1,0 +1,12 @@
+# Qt generate file types
+
+build-*/*
+build-QChecksumer*/*
+*.pro.user
+*.pro.user.*
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*-build-*
