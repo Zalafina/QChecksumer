@@ -6,7 +6,7 @@ QString Checksumer::m_filepath = QString();
 QList<Split_st> Checksumer::m_splitlist = QList<Split_st>();
 quint8 Checksumer::m_status = Checksumer::CHECKSUMER_IDLE;
 
-static const quint32 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024 * 2);
+static const quint32 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024 * 10);
 static const quint32 EVERY_SPLIT_SIZE_LARGE = (1024 * 1024 * 10);
 
 #define split_roundup(x,n) ((x+n-1)/n)
@@ -71,18 +71,23 @@ void Checksumer::ChecksumProcesser()
         }
 
         // Start Checksumming
+        int ChecksummingTime = 0;
+        QTime time;
+        time.start();
+
         m_status = CHECKSUMER_CHECKSUMMING;
 
         // Prepare the QList
         m_splitlist.clear();
 
+        qint64 filesize = fileInfo.size();
 
 #ifdef DEBUG_LOGOUT_ON
         // Get System ideal ThreadProcess Number
         int threadNumber = QThread::idealThreadCount();
         qDebug("ChecksumProcesser::file size : %lld, thread number : %d", filesize, threadNumber);
 #endif
-        qint64 filesize = fileInfo.size();
+
         Split_st tempSplit;
         tempSplit.index = 0;
         tempSplit.length = 0;
@@ -121,18 +126,13 @@ void Checksumer::ChecksumProcesser()
 //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
 //        }
 
-        int mapReduceTime = 0;
-        QTime time;
-        time.start();
-
         quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
         emit Checksumer_ChecksumResultSignal(final_checksum);
 
-        mapReduceTime = time.elapsed();
-        qDebug() << "MapReduce" << mapReduceTime;
-#ifdef DEBUG_LOGOUT_ON
-        qDebug("Final result.checksum(0x%X)", final_checksum);
-#endif
+        m_status = CHECKSUMER_COMPLETE;
+        ChecksummingTime = time.elapsed();
+        qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
+        qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", final_checksum, elapsedtime);
     }
     else{
         qWarning("ChecksumProcesser::File path is empty!!!");
@@ -173,6 +173,6 @@ void Checksumer::reduceResult(quint64 &checksum, const Split_st &split)
 {
     checksum += split.checksum;
     emit split.checksumer_ptr->Checksumer_ValueChangedSignal(split.index);
-    //qDebug("reduceResult:split.index(%d), result.checksum(0x%X), in thread(0x%08X)", split.index, result.checksum, (quint32)(QThread::currentThreadId()) );
+    qDebug("reduceResult:split.index(%d), checksum(0x%llX)", split.index, checksum);
 }
 
