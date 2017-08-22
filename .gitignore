@@ -5,6 +5,7 @@ build-QChecksumer*/*
 *.pro.user
 *.pro.user.*
 *.moc
+*.bin
 moc_*.cpp
 qrc_*.cpp
 ui_*.h
