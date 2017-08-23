@@ -6,8 +6,8 @@ QString Checksumer::m_filepath = QString();
 QList<Split_st> Checksumer::m_splitlist = QList<Split_st>();
 quint8 Checksumer::m_status = Checksumer::CHECKSUMER_IDLE;
 
-static const quint32 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024 * 10);
-static const quint32 EVERY_SPLIT_SIZE_LARGE = (1024 * 1024 * 10);
+static const quint64 EVERY_SPLIT_SIZE_SMALL = (1024 * 1024 * 10);
+static const quint64 EVERY_SPLIT_SIZE_LARGE = (1024 * 1024 * 10);
 
 #define split_roundup(x,n) ((x+n-1)/n)
 
@@ -129,16 +129,16 @@ void Checksumer::ChecksumProcesser()
 
             for (int loop = 0; loop < splitcount - 1; loop++){
                 tempSplit.index = loop;
-                tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * loop;
+                tempSplit.offset = (qint64)(EVERY_SPLIT_SIZE_SMALL * loop);
                 tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
                 m_splitlist.append(tempSplit);
             }
 
             /* last split */
             tempSplit.index = splitcount - 1;
-            tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * (splitcount - 1);
+            tempSplit.offset = (qint64)(EVERY_SPLIT_SIZE_SMALL * (splitcount - 1));
 
-            int lastsplitsize = filesize%EVERY_SPLIT_SIZE_SMALL;
+            qint64 lastsplitsize = filesize%EVERY_SPLIT_SIZE_SMALL;
             if(0 == lastsplitsize){
                 tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
             }
@@ -201,6 +201,8 @@ void Checksumer::reduceResult(quint64 &checksum, const Split_st &split)
 {
     checksum += split.checksum;
     emit split.checksumer_ptr->Checksumer_ValueChangedSignal(split.index);
-    qDebug("reduceResult:split.index(%d), checksum(0x%llX)", split.index, checksum);
+#ifdef DEBUG_LOGOUT_ON
+    qDebug("reduceResult:split.index(%d), checksum(0x%llX), offset(0x%llX), length(0x%llX), endaddress(0x%llX)", split.index, checksum, split.offset, split.length, (split.offset + split.length));
+#endif
 }
 

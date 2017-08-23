@@ -21,9 +21,9 @@ ChecksumerMain::~ChecksumerMain()
 void ChecksumerMain::on_openfileButton_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open BIN File"),
+                                                    "Open BIN File",
                                                     NULL,
-                                                    tr("BIN Files (*.bin *.img)"));
+                                                    "BIN Files (*.bin *.img)");
 
     if (fileName.length() != 0){
         emit m_Checksumer->OpenFileButtonClicked(fileName);
@@ -49,7 +49,7 @@ void ChecksumerMain::on_checksumButton_clicked()
         emit m_Checksumer->ChecksumButtonClicked();
     }
     else{
-        QMessageBox::warning(this, tr("Checksumer"), tr("Select BIN file first!"));
+        QMessageBox::warning(this, "Checksumer", "Select BIN file first!");
     }
 }
 
@@ -74,4 +74,12 @@ void ChecksumerMain::setChecksumResult(quint64 checksum)
     checksum_str.setNum(checksum,16);
     checksum_str = checksum_str.toUpper();
     ui->checksumDisplay->setText(checksum_str);
+
+    if (true == isHidden()){
+        showNormal();
+    }
+    activateWindow();
+    raise();
+
+    ui->checksumDisplay->selectAll();
 }
