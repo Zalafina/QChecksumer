@@ -51,9 +51,9 @@
   <widget class="QLineEdit" name="filenameDisplay">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>80</x>
      <y>90</y>
-     <width>271</width>
+     <width>211</width>
      <height>20</height>
     </rect>
    </property>
@@ -67,9 +67,9 @@
   <widget class="QLineEdit" name="checksumDisplay">
    <property name="geometry">
     <rect>
-     <x>20</x>
+     <x>80</x>
      <y>120</y>
-     <width>271</width>
+     <width>211</width>
      <height>20</height>
     </rect>
    </property>
@@ -87,10 +87,36 @@
     </rect>
    </property>
    <property name="text">
-    <string>Checksum</string>
+    <string>Checksum Start</string>
    </property>
    <property name="default">
     <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="filenameLabel">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>90</y>
+     <width>54</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Filename</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="checksumLabel">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>120</y>
+     <width>54</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Checksum</string>
    </property>
   </widget>
  </widget>

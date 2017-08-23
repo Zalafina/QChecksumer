@@ -16,7 +16,7 @@ class Checksumer;
 
 typedef struct {
     int index;
-    quint64 offset;
+    qint64 offset;
     quint64 length;
     quint64 checksum;
     Checksumer *checksumer_ptr;
