@@ -82,57 +82,85 @@ void Checksumer::ChecksumProcesser()
 
         qint64 filesize = fileInfo.size();
 
-#ifdef DEBUG_LOGOUT_ON
-        // Get System ideal ThreadProcess Number
-        int threadNumber = QThread::idealThreadCount();
-        qDebug("ChecksumProcesser::file size : %lld, thread number : %d", filesize, threadNumber);
-#endif
-
-        Split_st tempSplit;
-        tempSplit.index = 0;
-        tempSplit.length = 0;
-        tempSplit.checksum = 0;
-        tempSplit.offset = 0;
-        tempSplit.checksumer_ptr = this;
-
         int splitcount = split_roundup(filesize, EVERY_SPLIT_SIZE_SMALL);
+
+        if (1 == splitcount){
 #ifdef DEBUG_LOGOUT_ON
-        qDebug("splitcount:%d", splitcount);
+            // Get System ideal ThreadProcess Number
+            int threadNumber = QThread::idealThreadCount();
+            qDebug("ChecksumProcesser::file size : %lld, thread number : %d", filesize, threadNumber);
+            qDebug("splitcount:%d", splitcount);
 #endif
+            emit Checksumer_RangeChangedSignal(0, 1);
 
-        for (int loop = 0; loop < splitcount - 1; loop++){
-            tempSplit.index = loop;
-            tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * loop;
-            tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
-            m_splitlist.append(tempSplit);
-        }
+            Split_st tempSplit;
+            tempSplit.index = 0;
+            tempSplit.length = filesize;
+            tempSplit.checksum = 0;
+            tempSplit.offset = 0;
+            tempSplit.checksumer_ptr = this;
 
-        /* last split */
-        tempSplit.index = splitcount - 1;
-        tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * (splitcount - 1);
+            Split_st result = splitChecksum(tempSplit);
 
-        int lastsplitsize = filesize%EVERY_SPLIT_SIZE_SMALL;
-        if(0 == lastsplitsize){
-            tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
+            emit Checksumer_ValueChangedSignal(1);
+            emit Checksumer_ChecksumResultSignal(result.checksum);
+            m_status = CHECKSUMER_COMPLETE;
+            ChecksummingTime = time.elapsed();
+            qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
+            qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", result.checksum, elapsedtime);
         }
         else{
-            tempSplit.length = lastsplitsize;
+#ifdef DEBUG_LOGOUT_ON
+            // Get System ideal ThreadProcess Number
+            int threadNumber = QThread::idealThreadCount();
+            qDebug("ChecksumProcesser::file size : %lld, thread number : %d", filesize, threadNumber);
+#endif
+
+            Split_st tempSplit;
+            tempSplit.index = 0;
+            tempSplit.length = 0;
+            tempSplit.checksum = 0;
+            tempSplit.offset = 0;
+            tempSplit.checksumer_ptr = this;
+
+#ifdef DEBUG_LOGOUT_ON
+            qDebug("splitcount:%d", splitcount);
+#endif
+
+            for (int loop = 0; loop < splitcount - 1; loop++){
+                tempSplit.index = loop;
+                tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * loop;
+                tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
+                m_splitlist.append(tempSplit);
+            }
+
+            /* last split */
+            tempSplit.index = splitcount - 1;
+            tempSplit.offset = EVERY_SPLIT_SIZE_SMALL * (splitcount - 1);
+
+            int lastsplitsize = filesize%EVERY_SPLIT_SIZE_SMALL;
+            if(0 == lastsplitsize){
+                tempSplit.length = EVERY_SPLIT_SIZE_SMALL;
+            }
+            else{
+                tempSplit.length = lastsplitsize;
+            }
+            m_splitlist.append(tempSplit);
+
+            emit Checksumer_RangeChangedSignal(0, (splitcount - 1));
+
+    //        for (int loop = 0; loop < m_splitlist.size(); loop++){
+    //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
+    //        }
+
+            quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
+            emit Checksumer_ChecksumResultSignal(final_checksum);
+
+            m_status = CHECKSUMER_COMPLETE;
+            ChecksummingTime = time.elapsed();
+            qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
+            qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", final_checksum, elapsedtime);
         }
-        m_splitlist.append(tempSplit);
-
-        emit Checksumer_RangeChangedSignal(0, (splitcount - 1));
-
-//        for (int loop = 0; loop < m_splitlist.size(); loop++){
-//            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
-//        }
-
-        quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
-        emit Checksumer_ChecksumResultSignal(final_checksum);
-
-        m_status = CHECKSUMER_COMPLETE;
-        ChecksummingTime = time.elapsed();
-        qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
-        qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", final_checksum, elapsedtime);
     }
     else{
         qWarning("ChecksumProcesser::File path is empty!!!");
