@@ -75,11 +75,18 @@ void ChecksumerMain::setChecksumResult(quint64 checksum)
     checksum_str = checksum_str.toUpper();
     ui->checksumDisplay->setText(checksum_str);
 
-    if (true == isHidden()){
-        showNormal();
-    }
-    activateWindow();
+    Qt::WindowFlags flags = this->windowFlags();
+    flags |= Qt::WindowStaysOnTopHint;
+    this->setWindowFlags(flags);
     raise();
+    showNormal();
+    activateWindow();
+
+    flags &= ~Qt::WindowStaysOnTopHint;
+    this->setWindowFlags(flags);
+    raise();
+    showNormal();
+    activateWindow();
 
     ui->checksumDisplay->selectAll();
 }

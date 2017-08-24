@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = QChecksumer
 TEMPLATE = app
-RC_ICONS = image/my_icon.ico
+#RC_ICONS = image/my_icon.ico
 
 CONFIG(debug, debug|release){
     DEFINES += DEBUG_LOGOUT_ON
@@ -49,10 +49,14 @@ win32 {
 #    QMAKE_CXXFLAGS_DEBUG    += -MTd
 }
 
+RC_FILE     += QChecksumer.rc
 
 SOURCES     += main.cpp\
     checksumermain.cpp \
     checksumer.cpp
+
+DISTFILES += \
+    QChecksumer.rc
 
 HEADERS     += checksumermain.h \
     checksumer.h
