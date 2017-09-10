@@ -11,6 +11,7 @@
 #include <QMutex>
 #include <QProgressDialog>
 #include <QTimer>
+#include <QElapsedTimer>
 
 class Checksumer;
 
@@ -43,7 +44,8 @@ signals:
 
     void Checksumer_RangeChangedSignal(int minimum, int maximum);
     void Checksumer_ValueChangedSignal(int progressValue);
-    void Checksumer_ChecksumResultSignal(quint64 checksum);
+    void Checksumer_ChecksumResultSignal(quint64 checksum, qint64 elapsedtime);
+    void Checksumer_ElapsedTimeSignal(qint64 elapsedtime);
 
 public slots:
     void threadStarted(void);
@@ -53,11 +55,15 @@ public slots:
 public:
     static Split_st splitChecksum(const Split_st &split);
     static void reduceResult(quint64 &checksum, const Split_st &split);
+    const qint64 getElapsedTime(void);
 
 public:
     static QString  m_filepath;
     static QList<Split_st> m_splitlist;
     static quint8 m_status;
+
+private:
+    QElapsedTimer   m_elapsedtime;
 };
 
 #endif // CHECKSUMER_H

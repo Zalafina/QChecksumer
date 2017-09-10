@@ -13,6 +13,8 @@ TARGET = QChecksumer
 TEMPLATE = app
 #RC_ICONS = image/my_icon.ico
 
+#DEFINES += BRINGTO_FOREGROUND_ATFINISHED
+
 CONFIG(debug, debug|release){
     DEFINES += DEBUG_LOGOUT_ON
     message("Debug Build")
@@ -21,7 +23,13 @@ CONFIG(debug, debug|release){
 CONFIG(release, debug|release){
     message("Release Build")
 }
-#DEFINES += DEBUG_LOGOUT_ON
+
+contains( DEFINES, BRINGTO_FOREGROUND_ATFINISHED ) {
+    message("contains BRINGTO_FOREGROUND_ATFINISHED")
+    DEFINES += _X86_
+    LIBS    += -L$$PWD/win32_libs
+    LIBS    += user32.lib
+}
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings

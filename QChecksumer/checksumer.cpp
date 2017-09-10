@@ -12,7 +12,8 @@ static const quint64 EVERY_SPLIT_SIZE_LARGE = (1024 * 1024 * 10);
 #define split_roundup(x,n) ((x+n-1)/n)
 
 Checksumer::Checksumer(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    m_elapsedtime()
 {
     QObject::connect(this, SIGNAL(OpenFileButtonClicked(QString)), this, SLOT(OpenFileProcesser(QString)), Qt::AutoConnection);
     QObject::connect(this, SIGNAL(ChecksumButtonClicked()), this, SLOT(ChecksumProcesser()), Qt::AutoConnection);
@@ -71,9 +72,9 @@ void Checksumer::ChecksumProcesser()
         }
 
         // Start Checksumming
-        int ChecksummingTime = 0;
-        QTime time;
-        time.start();
+        qint64 ChecksummingTime = 0;
+        //QTime time;
+        m_elapsedtime.restart();
 
         m_status = CHECKSUMER_CHECKSUMMING;
 
@@ -103,11 +104,13 @@ void Checksumer::ChecksumProcesser()
             Split_st result = splitChecksum(tempSplit);
 
             emit Checksumer_ValueChangedSignal(1);
-            emit Checksumer_ChecksumResultSignal(result.checksum);
             m_status = CHECKSUMER_COMPLETE;
-            ChecksummingTime = time.elapsed();
+            ChecksummingTime = m_elapsedtime.elapsed();
+            emit Checksumer_ChecksumResultSignal(result.checksum, ChecksummingTime);
+#ifdef DEBUG_LOGOUT_ON
             qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
             qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", result.checksum, elapsedtime);
+#endif
         }
         else{
 #ifdef DEBUG_LOGOUT_ON
@@ -154,13 +157,17 @@ void Checksumer::ChecksumProcesser()
     //        }
 
             quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
-            emit Checksumer_ChecksumResultSignal(final_checksum);
 
             m_status = CHECKSUMER_COMPLETE;
-            ChecksummingTime = time.elapsed();
+            ChecksummingTime = m_elapsedtime.elapsed();
+            emit Checksumer_ChecksumResultSignal(final_checksum, ChecksummingTime);
+#ifdef DEBUG_LOGOUT_ON
             qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
             qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", final_checksum, elapsedtime);
+#endif
         }
+
+        m_elapsedtime.invalidate();
     }
     else{
         qWarning("ChecksumProcesser::File path is empty!!!");
@@ -204,5 +211,15 @@ void Checksumer::reduceResult(quint64 &checksum, const Split_st &split)
 #ifdef DEBUG_LOGOUT_ON
     qDebug("reduceResult:split.index(%d), checksum(0x%llX), offset(0x%llX), length(0x%llX), endaddress(0x%llX)", split.index, checksum, split.offset, split.length, (split.offset + split.length));
 #endif
+}
+
+const qint64 Checksumer::getElapsedTime()
+{
+    if (true == m_elapsedtime.isValid()){
+        return m_elapsedtime.elapsed();
+    }
+    else{
+        return -1;
+    }
 }
 

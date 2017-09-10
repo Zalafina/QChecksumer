@@ -26,7 +26,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "https://github.com/Zalafina/QChecksumer"
-            VALUE "FileDescription", "A file checksumer up to 64bit"
+            VALUE "FileDescription", "QChecksumer"
             VALUE "FileVersion", "1.0.0.0"
             VALUE "InternalName", "QChecksumer"
             VALUE "LegalCopyright", "Copyright (c) 2017, Melvin Li"

@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QMessageBox>
+#include <QStatusBar>
 #include "checksumer.h"
 
 namespace Ui {
@@ -25,11 +26,16 @@ private slots:
 public slots:
     void processbar_SetRange(int minimum, int maximum);
     void processbar_SetValue(int progressValue);
-    void setChecksumResult(quint64 checksum);
+    void setChecksumResult(quint64 checksum, qint64 elapsedtime);
+    void processbar_ValueChanged(int value);
+    void elapsedTimeUpdate(void);
 
 private:
-    Ui::ChecksumerMain *ui;
-    Checksumer * m_Checksumer;
+    void setElapsedTimetoLCDNumber(qint64 elapsedtime);
+
+    Ui::ChecksumerMain  *ui;
+    Checksumer          *m_Checksumer;
+    QTimer              m_updatetimer;
 };
 
 #endif // CHECKSUMERMAIN_H
