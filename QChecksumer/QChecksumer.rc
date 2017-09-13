@@ -6,6 +6,7 @@
 
 // ICON
 IDI_ICON1       ICON      "image/my_icon.ico"
+//IDI_ICON1       ICON      "image/normal_icon.ico"
 
 // Version
 VS_VERSION_INFO VERSIONINFO
