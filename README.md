@@ -1,6 +1,7 @@
 # QChecksumer
 A file checksum(up to 64bit) computation program of Qt5.8.0.  
 Components that used：QtCore QtGui QtWidgets QtConcurrent
+____________________________________________________________________
 # Feature details
 1. Use QtConcurrent Map-Reduce API to compute the file checksum with multi threads.  
 QtConcurrent automatically adjust the number of threads used according to the number of local processor cores available.  
