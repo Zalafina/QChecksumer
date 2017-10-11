@@ -55,7 +55,7 @@ public slots:
 public:
     static Split_st splitChecksum(const Split_st &split);
     static void reduceResult(quint64 &checksum, const Split_st &split);
-    const qint64 getElapsedTime(void);
+    qint64 getElapsedTime(void);
 
 public:
     static QString  m_filepath;

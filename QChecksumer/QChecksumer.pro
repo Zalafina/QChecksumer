@@ -42,8 +42,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+LIBS    += -L$$PWD/win32_libs
+LIBS    += user32.lib
+
 win32 {
     message("Win32 Platform")
+
+    QMAKE_LFLAGS_CONSOLE -=/SUBSYSTEM:CONSOLE
+    QMAKE_LFLAGS_WINDOWS -=/SUBSYSTEM:WINDOWS
+    QMAKE_LFLAGS_CONSOLE +=/SUBSYSTEM:CONSOLE,5.01
+    QMAKE_LFLAGS_WINDOWS +=/SUBSYSTEM:WINDOWS,5.01
+    message("QMAKE_LFLAGS_CONSOLE: "$$QMAKE_LFLAGS_CONSOLE)
+    message("QMAKE_LFLAGS_WINDOWS: "$$QMAKE_LFLAGS_WINDOWS)
+
 #    CONFIG += static
 
 #    QMAKE_CFLAGS_RELEASE    -= -MD

@@ -213,7 +213,7 @@ void Checksumer::reduceResult(quint64 &checksum, const Split_st &split)
 #endif
 }
 
-const qint64 Checksumer::getElapsedTime()
+qint64 Checksumer::getElapsedTime()
 {
     if (true == m_elapsedtime.isValid()){
         return m_elapsedtime.elapsed();
