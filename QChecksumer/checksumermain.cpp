@@ -60,6 +60,7 @@ void ChecksumerMain::on_openfileButton_clicked()
         QFileInfo fileInfo(fileName);
         QString dispFilename = fileInfo.fileName();
         ui->filenameDisplay->setText(dispFilename);
+        ui->filenameDisplay->setToolTip(fileName);
 
         ui->progressBar->setRange(0, 100);
         ui->progressBar->setValue(0);
@@ -136,7 +137,7 @@ void ChecksumerMain::setChecksumResult(quint64 checksum, qint64 elapsedtime)
     qreal displayvalue = ui->elapsedtimeLCDNumber->value();
     QString realString = QString::number(displayvalue, 'f', 1);
     realString.prepend(QChar('('));
-    realString.append("Sec)");
+    realString.append(" Sec)");
     this->setWindowTitle(QString("Complete") + realString + QString(" - QChecksumer"));
 }
 
