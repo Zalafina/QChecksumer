@@ -10,8 +10,8 @@ IDI_ICON1       ICON      "image/my_icon.ico"
 
 // Version
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,0
- PRODUCTVERSION 1,0,0,0
+ FILEVERSION 1,1,0,0
+ PRODUCTVERSION 1,1,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -28,12 +28,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "https://github.com/Zalafina/QChecksumer"
             VALUE "FileDescription", "QChecksumer"
-            VALUE "FileVersion", "1.0.0.0"
+            VALUE "FileVersion", "1.1.0.0"
             VALUE "InternalName", "QChecksumer"
             VALUE "LegalCopyright", "Copyright (c) 2017, Melvin Li"
             VALUE "OriginalFilename", "QChecksumer.exe"
             VALUE "ProductName", "QChecksumer"
-            VALUE "ProductVersion", "1.0.0.0"
+            VALUE "ProductVersion", "1.1.0.0"
         END
     END
     BLOCK "VarFileInfo"
