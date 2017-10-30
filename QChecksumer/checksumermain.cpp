@@ -1,4 +1,5 @@
 #ifdef BRINGTO_FOREGROUND_ATFINISHED
+#include "windows.h"
 #include "windef.h"
 #include "winuser.h"
 #include "process.h"
@@ -9,15 +10,22 @@
 static const quint64 TIME_UPDATE_TIMEOUT = 100;
 
 #ifdef BRINGTO_FOREGROUND_ATFINISHED
+static void BringWindowToTopEx(HWND hwnd)
+{
+    AttachThreadInput(GetWindowThreadProcessId(GetForegroundWindow(), NULL), GetCurrentThreadId(), true) ;
+    SetForegroundWindow(hwnd) ;
+    SetFocus(hwnd) ;
+    AttachThreadInput(GetWindowThreadProcessId(GetForegroundWindow(), NULL), GetCurrentThreadId(), false) ;
+}
+
 static BOOL CALLBACK focusChildProcWindow(HWND hwnd, LPARAM lParam)
 {
-    DWORD processId = static_cast<WORD>(lParam);
+    DWORD processId = static_cast<DWORD>(lParam);
     DWORD windowProcessId = NULL;
     GetWindowThreadProcessId(hwnd, &windowProcessId);
     if(windowProcessId == processId)
     {
-        SwitchToThisWindow(hwnd, TRUE);
-        SetForegroundWindow(hwnd);
+        BringWindowToTopEx(hwnd);
         return FALSE;
     }
 
@@ -45,6 +53,30 @@ ChecksumerMain::ChecksumerMain(Checksumer *checksumer, QWidget *parent) :
 ChecksumerMain::~ChecksumerMain()
 {
     delete ui;
+}
+
+void ChecksumerMain::ActivationChangedProc()
+{
+    if (true == isActiveWindow()){
+        if (Checksumer::CHECKSUMER_COMPLETE == m_Checksumer->m_status){
+#ifdef DEBUG_LOGOUT_ON
+            qDebug() << "[ActivationChangedProc]" << "WindowActived at CHECKSUMER_COMPLETE";
+#endif
+            ui->checksumDisplay->selectAll();
+        }
+    }
+    else{
+    }
+}
+
+void ChecksumerMain::changeEvent(QEvent *event)
+{
+    if(event->type()==QEvent::ActivationChange)
+    {
+        QTimer::singleShot(0, this, SLOT(ActivationChangedProc()));
+    }
+
+    QDialog::changeEvent(event);
 }
 
 void ChecksumerMain::on_openfileButton_clicked()
@@ -91,6 +123,7 @@ void ChecksumerMain::processbar_SetRange(int minimum, int maximum)
 #ifdef DEBUG_LOGOUT_ON
     qDebug("processbar_SetRange:minimum(%d), maximum(%d)", minimum, maximum);
 #endif
+    ui->openfileButton->setEnabled(false);
     ui->progressBar->setRange(minimum, maximum);
     ui->progressBar->setValue(0);
     ui->checksumDisplay->clear();
@@ -111,34 +144,25 @@ void ChecksumerMain::setChecksumResult(quint64 checksum, qint64 elapsedtime)
     m_updatetimer.stop();
     setElapsedTimetoLCDNumber(elapsedtime);
 
-#ifdef BRINGTO_FOREGROUND_ATFINISHED
-//    Qt::WindowFlags flags = this->windowFlags();
-//    flags |= Qt::WindowStaysOnTopHint;
-//    this->setWindowFlags(flags);
-//    showNormal();
-//    activateWindow();
-//    raise();
-
-//    flags &= ~Qt::WindowStaysOnTopHint;
-//    this->setWindowFlags(flags);
-//    showNormal();
-//    activateWindow();
-//    raise();
-
-    int pid = getpid();
-    EnumWindows(focusChildProcWindow, static_cast<LPARAM>(pid));
-#else
-    showNormal();
-    activateWindow();
-    raise();
-#endif
-
-    ui->checksumDisplay->selectAll();
     qreal displayvalue = ui->elapsedtimeLCDNumber->value();
     QString realString = QString::number(displayvalue, 'f', 1);
     realString.prepend(QChar('('));
     realString.append(" Sec)");
     this->setWindowTitle(QString("Complete") + realString + QString(" - QChecksumer"));
+    ui->openfileButton->setEnabled(true);
+
+    if (true == isActiveWindow()){
+        if (Checksumer::CHECKSUMER_COMPLETE == m_Checksumer->m_status){
+            ui->checksumDisplay->selectAll();
+        }
+    }
+
+#ifdef BRINGTO_FOREGROUND_ATFINISHED
+    if (true != isActiveWindow()){
+        DWORD pid = getpid();
+        EnumWindows(focusChildProcWindow, static_cast<LPARAM>(pid));
+    }
+#endif
 }
 
 void ChecksumerMain::processbar_ValueChanged(int value)

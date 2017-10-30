@@ -18,6 +18,10 @@ public:
     explicit ChecksumerMain(Checksumer * checksumer, QWidget *parent = 0);
     ~ChecksumerMain();
 
+    Q_INVOKABLE void ActivationChangedProc(void);
+protected:
+    void changeEvent(QEvent *event);
+
 private slots:
     void on_openfileButton_clicked();
 
