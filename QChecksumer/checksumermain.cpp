@@ -62,6 +62,7 @@ void ChecksumerMain::ActivationChangedProc()
 #ifdef DEBUG_LOGOUT_ON
             qDebug() << "[ActivationChangedProc]" << "WindowActived at CHECKSUMER_COMPLETE";
 #endif
+            ui->checksumDisplay->setFocus(Qt::ActiveWindowFocusReason);
             ui->checksumDisplay->selectAll();
         }
     }
@@ -153,6 +154,7 @@ void ChecksumerMain::setChecksumResult(quint64 checksum, qint64 elapsedtime)
 
     if (true == isActiveWindow()){
         if (Checksumer::CHECKSUMER_COMPLETE == m_Checksumer->m_status){
+            ui->checksumDisplay->setFocus(Qt::ActiveWindowFocusReason);
             ui->checksumDisplay->selectAll();
         }
     }
