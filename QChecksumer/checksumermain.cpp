@@ -107,12 +107,22 @@ void ChecksumerMain::on_openfileButton_clicked()
 void ChecksumerMain::on_checksumButton_clicked()
 {
     if (false == Checksumer::m_filepath.isEmpty()){
-        ui->progressBar->setRange(0, 100);
-        ui->progressBar->setValue(0);
-        ui->checksumDisplay->clear();
-        this->setWindowTitle(QString("QChecksumer"));
-        m_updatetimer.start(TIME_UPDATE_TIMEOUT);
-        emit m_Checksumer->ChecksumButtonClicked();
+        if (Checksumer::CHECKSUMER_CHECKSUMMING == m_Checksumer->m_status){
+            ui->progressBar->setRange(0, 100);
+            ui->progressBar->setValue(0);
+            ui->checksumDisplay->clear();
+            this->setWindowTitle(QString("QChecksumer"));
+            m_updatetimer.start(TIME_UPDATE_TIMEOUT);
+            emit m_Checksumer->ChecksumButtonClicked();
+        }
+        else{
+            ui->progressBar->setRange(0, 100);
+            ui->progressBar->setValue(0);
+            ui->checksumDisplay->clear();
+            this->setWindowTitle(QString("QChecksumer"));
+            m_updatetimer.stop();
+            emit m_Checksumer->ChecksumButtonClicked();
+        }
     }
     else{
         QMessageBox::warning(this, "Checksumer", "Select BIN file first!");
@@ -125,6 +135,7 @@ void ChecksumerMain::processbar_SetRange(int minimum, int maximum)
     qDebug("processbar_SetRange:minimum(%d), maximum(%d)", minimum, maximum);
 #endif
     ui->openfileButton->setEnabled(false);
+    ui->checksumButton->setText("Checksum Stop");
     ui->progressBar->setRange(minimum, maximum);
     ui->progressBar->setValue(0);
     ui->checksumDisplay->clear();
@@ -151,6 +162,7 @@ void ChecksumerMain::setChecksumResult(quint64 checksum, qint64 elapsedtime)
     realString.append(" Sec)");
     this->setWindowTitle(QString("Complete") + realString + QString(" - QChecksumer"));
     ui->openfileButton->setEnabled(true);
+    ui->checksumButton->setText("Checksum Start");
 
     if (true == isActiveWindow()){
         if (Checksumer::CHECKSUMER_COMPLETE == m_Checksumer->m_status){

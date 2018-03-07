@@ -15,8 +15,8 @@ Checksumer::Checksumer(QObject *parent) :
     QObject(parent),
     m_elapsedtime()
 {
-    QObject::connect(this, SIGNAL(OpenFileButtonClicked(QString)), this, SLOT(OpenFileProcesser(QString)), Qt::AutoConnection);
-    QObject::connect(this, SIGNAL(ChecksumButtonClicked()), this, SLOT(ChecksumProcesser()), Qt::AutoConnection);
+    QObject::connect(this, &Checksumer::OpenFileButtonClicked, this, &Checksumer::OpenFileProcesser);
+    QObject::connect(this, &Checksumer::ChecksumButtonClicked, this, &Checksumer::ChecksumProcesser);
 }
 
 void Checksumer::threadStarted()
@@ -156,7 +156,12 @@ void Checksumer::ChecksumProcesser()
     //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
     //        }
 
-            quint64 final_checksum = QtConcurrent::mappedReduced(m_splitlist, Checksumer::splitChecksum, Checksumer::reduceResult, QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce | QtConcurrent::SequentialReduce));
+            quint64 final_checksum = \
+                    QtConcurrent::mappedReduced(m_splitlist,
+                                                Checksumer::splitChecksum,
+                                                Checksumer::reduceResult,
+                                                QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce
+                                                                            | QtConcurrent::SequentialReduce));
 
             m_status = CHECKSUMER_COMPLETE;
             ChecksummingTime = m_elapsedtime.elapsed();
@@ -221,5 +226,10 @@ qint64 Checksumer::getElapsedTime()
     else{
         return -1;
     }
+}
+
+quint8 Checksumer::getChecksumerStatus(void)
+{
+    return m_status;
 }
 
