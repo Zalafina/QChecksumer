@@ -13,10 +13,13 @@ static const quint64 EVERY_SPLIT_BYTESIZE = (1024 * 1024 * 30);
 
 Checksumer::Checksumer(QObject *parent) :
     QObject(parent),
-    m_elapsedtime()
+    m_elapsedtime(),
+    m_checksum_result()
 {
     QObject::connect(this, &Checksumer::OpenFileButtonClicked, this, &Checksumer::OpenFileProcesser);
     QObject::connect(this, &Checksumer::ChecksumButtonClicked, this, &Checksumer::ChecksumProcesser);
+    QObject::connect(this, &Checksumer::ChecksumButtonCancelClicked, this, &Checksumer::ChecksumProcessCancel, Qt::DirectConnection);
+    //QObject::connect(this, &Checksumer::ChecksumButtonCancelClicked, this, &Checksumer::ChecksumProcessCancel);
 }
 
 void Checksumer::threadStarted()
@@ -156,19 +159,29 @@ void Checksumer::ChecksumProcesser()
     //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
     //        }
 
-            quint64 final_checksum = \
+            m_checksum_result = \
                     QtConcurrent::mappedReduced(m_splitlist,
                                                 Checksumer::splitChecksum,
                                                 Checksumer::reduceResult,
                                                 QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce
                                                                             | QtConcurrent::SequentialReduce));
 
+            m_checksum_result.waitForFinished();
+
+            if (CHECKSUMER_CANCELED == m_status){
+                m_splitlist.clear();
+                m_elapsedtime.invalidate();
+                m_status = CHECKSUMER_FILEOPENED;
+                emit Checksumer_ChecksumProcessCanceled();
+                return;
+            }
+
             m_status = CHECKSUMER_COMPLETE;
             ChecksummingTime = m_elapsedtime.elapsed();
-            emit Checksumer_ChecksumResultSignal(final_checksum, ChecksummingTime);
+            emit Checksumer_ChecksumResultSignal(m_checksum_result.result(), ChecksummingTime);
 #ifdef DEBUG_LOGOUT_ON
             qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
-            qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", final_checksum, elapsedtime);
+            qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", m_checksum_result.result(), elapsedtime);
 #endif
         }
 
@@ -177,6 +190,34 @@ void Checksumer::ChecksumProcesser()
     else{
         qWarning("ChecksumProcesser::File path is empty!!!");
         return;
+    }
+}
+
+void Checksumer::ChecksumProcessCancel(void)
+{
+    qDebug("ChecksumProcessCancel Called~~~");
+
+    if (false == m_filepath.isEmpty()){
+        QFileInfo fileInfo(m_filepath);
+
+        if(fileInfo.isReadable()) {
+            if (fileInfo.size() > 0){
+            }
+            else{
+                qWarning("ChecksumProcesser::file size error : %lld", fileInfo.size());
+                return;
+            }
+        }
+        else{
+            qWarning("ChecksumProcesser::File is unreadable!!!");
+            return;
+        }
+
+        if ((CHECKSUMER_CHECKSUMMING == m_status)
+                && (true == m_checksum_result.isStarted())){
+            m_status = CHECKSUMER_CANCELED;
+            m_checksum_result.cancel();
+        }
     }
 }
 

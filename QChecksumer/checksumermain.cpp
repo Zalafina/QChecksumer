@@ -40,11 +40,13 @@ ChecksumerMain::ChecksumerMain(Checksumer *checksumer, QWidget *parent) :
 {
     ui->setupUi(this);
     m_Checksumer = checksumer;
+    setElapsedTimetoLCDNumber(0);
     m_updatetimer.setTimerType(Qt::PreciseTimer);
 
     QObject::connect(m_Checksumer, SIGNAL(Checksumer_RangeChangedSignal(int,int)), this, SLOT(processbar_SetRange(int,int)), Qt::AutoConnection);
     QObject::connect(m_Checksumer, SIGNAL(Checksumer_ValueChangedSignal(int)), this, SLOT(processbar_SetValue(int)), Qt::AutoConnection);
     QObject::connect(m_Checksumer, SIGNAL(Checksumer_ChecksumResultSignal(quint64, qint64)), this, SLOT(setChecksumResult(quint64, qint64)), Qt::AutoConnection);
+    QObject::connect(m_Checksumer, &Checksumer::Checksumer_ChecksumProcessCanceled, this, &ChecksumerMain::checksumProc_Canceled);
     //QObject::connect(m_Checksumer, SIGNAL(Checksumer_ElapsedTimeSignal(qint64)), this, SLOT(elapsedTimeUpdate(qint64)), Qt::AutoConnection);
     QObject::connect(&m_updatetimer, SIGNAL(timeout()), this, SLOT(elapsedTimeUpdate()), Qt::AutoConnection);
     QObject::connect(ui->progressBar, SIGNAL(valueChanged(int)), this, SLOT(processbar_ValueChanged(int)), Qt::AutoConnection);
@@ -98,6 +100,7 @@ void ChecksumerMain::on_openfileButton_clicked()
         ui->progressBar->setRange(0, 100);
         ui->progressBar->setValue(0);
         ui->checksumDisplay->clear();
+        setElapsedTimetoLCDNumber(0);
         this->setWindowTitle(QString("QChecksumer"));
     }
     else{
@@ -108,19 +111,14 @@ void ChecksumerMain::on_checksumButton_clicked()
 {
     if (false == Checksumer::m_filepath.isEmpty()){
         if (Checksumer::CHECKSUMER_CHECKSUMMING == m_Checksumer->m_status){
-            ui->progressBar->setRange(0, 100);
-            ui->progressBar->setValue(0);
-            ui->checksumDisplay->clear();
-            this->setWindowTitle(QString("QChecksumer"));
-            m_updatetimer.start(TIME_UPDATE_TIMEOUT);
-            emit m_Checksumer->ChecksumButtonClicked();
+            emit m_Checksumer->ChecksumButtonCancelClicked();
         }
         else{
             ui->progressBar->setRange(0, 100);
             ui->progressBar->setValue(0);
             ui->checksumDisplay->clear();
             this->setWindowTitle(QString("QChecksumer"));
-            m_updatetimer.stop();
+            m_updatetimer.start(TIME_UPDATE_TIMEOUT);
             emit m_Checksumer->ChecksumButtonClicked();
         }
     }
@@ -202,6 +200,18 @@ void ChecksumerMain::elapsedTimeUpdate(void)
     if (ElapsedTime != -1){
         setElapsedTimetoLCDNumber(ElapsedTime);
     }
+}
+
+void ChecksumerMain::checksumProc_Canceled(void)
+{
+    ui->progressBar->setRange(0, 100);
+    ui->progressBar->setValue(0);
+    ui->checksumDisplay->clear();
+    this->setWindowTitle(QString("QChecksumer"));
+    m_updatetimer.stop();
+    setElapsedTimetoLCDNumber(0);
+    ui->openfileButton->setEnabled(true);
+    ui->checksumButton->setText("Checksum Start");
 }
 
 void ChecksumerMain::setElapsedTimetoLCDNumber(qint64 elapsedtime)

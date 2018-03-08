@@ -33,6 +33,7 @@ public slots:
     void setChecksumResult(quint64 checksum, qint64 elapsedtime);
     void processbar_ValueChanged(int value);
     void elapsedTimeUpdate(void);
+    void checksumProc_Canceled(void);
 
 private:
     void setElapsedTimetoLCDNumber(qint64 elapsedtime);
