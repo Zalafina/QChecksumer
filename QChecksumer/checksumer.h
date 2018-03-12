@@ -12,7 +12,7 @@
 #include <QProgressDialog>
 #include <QTimer>
 #include <QElapsedTimer>
-#include <QFuture>
+#include <QFutureWatcher>
 
 class Checksumer;
 
@@ -35,8 +35,7 @@ public:
         CHECKSUMER_IDLE,
         CHECKSUMER_FILEOPENED,
         CHECKSUMER_CHECKSUMMING,
-        CHECKSUMER_COMPLETE,
-        CHECKSUMER_CANCELED
+        CHECKSUMER_COMPLETE
     };
     Q_ENUM(Checksumer_Status)
 
@@ -56,6 +55,7 @@ public slots:
     void OpenFileProcesser(QString filepath);
     void ChecksumProcesser(void);
     void ChecksumProcessCancel(void);
+    void ChecksumProcessFinished(void);
 
 public:
     static Split_st splitChecksum(const Split_st &split);
@@ -70,7 +70,7 @@ public:
 
 private:
     QElapsedTimer   m_elapsedtime;
-    QFuture<quint64> m_checksum_result;
+    QFutureWatcher<quint64> m_futureWatcher;
 };
 
 #endif // CHECKSUMER_H

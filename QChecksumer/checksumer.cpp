@@ -14,12 +14,14 @@ static const quint64 EVERY_SPLIT_BYTESIZE = (1024 * 1024 * 30);
 Checksumer::Checksumer(QObject *parent) :
     QObject(parent),
     m_elapsedtime(),
-    m_checksum_result()
+    m_futureWatcher()
 {
     QObject::connect(this, &Checksumer::OpenFileButtonClicked, this, &Checksumer::OpenFileProcesser);
     QObject::connect(this, &Checksumer::ChecksumButtonClicked, this, &Checksumer::ChecksumProcesser);
     QObject::connect(this, &Checksumer::ChecksumButtonCancelClicked, this, &Checksumer::ChecksumProcessCancel, Qt::DirectConnection);
-    //QObject::connect(this, &Checksumer::ChecksumButtonCancelClicked, this, &Checksumer::ChecksumProcessCancel);
+
+
+    //QObject::connect(&m_futureWatcher, SIGNAL(finished()), this, SLOT(ChecksumProcessFinished()));
 }
 
 void Checksumer::threadStarted()
@@ -153,36 +155,42 @@ void Checksumer::ChecksumProcesser()
             }
             m_splitlist.append(tempSplit);
 
+
             emit Checksumer_RangeChangedSignal(0, (splitcount - 1));
 
-    //        for (int loop = 0; loop < m_splitlist.size(); loop++){
-    //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
-    //        }
+            //        for (int loop = 0; loop < m_splitlist.size(); loop++){
+            //            qDebug("splitlist(%d):offset(%lld), length(%lld)", loop, m_splitlist[loop].offset, m_splitlist[loop].length);
+            //        }
 
-            m_checksum_result = \
-                    QtConcurrent::mappedReduced(m_splitlist,
-                                                Checksumer::splitChecksum,
-                                                Checksumer::reduceResult,
-                                                QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce
-                                                                            | QtConcurrent::SequentialReduce));
+            // Start the computation.
+            m_futureWatcher.setFuture(QtConcurrent::mappedReduced(m_splitlist,
+                                                                  Checksumer::splitChecksum,
+                                                                  Checksumer::reduceResult,
+                                                                  QtConcurrent::ReduceOptions(QtConcurrent::OrderedReduce
+                                                                                              | QtConcurrent::SequentialReduce)));
 
-            m_checksum_result.waitForFinished();
+            m_futureWatcher.waitForFinished();
 
-            if (CHECKSUMER_CANCELED == m_status){
+            if (true == m_futureWatcher.future().isCanceled()){
                 m_splitlist.clear();
                 m_elapsedtime.invalidate();
                 m_status = CHECKSUMER_FILEOPENED;
                 emit Checksumer_ChecksumProcessCanceled();
                 return;
             }
-
-            m_status = CHECKSUMER_COMPLETE;
-            ChecksummingTime = m_elapsedtime.elapsed();
-            emit Checksumer_ChecksumResultSignal(m_checksum_result.result(), ChecksummingTime);
+            else if (true == m_futureWatcher.future().isFinished()){
+                m_status = CHECKSUMER_COMPLETE;
+                ChecksummingTime = m_elapsedtime.elapsed();
+                m_elapsedtime.invalidate();
+                emit Checksumer_ChecksumResultSignal(m_futureWatcher.future().result(), ChecksummingTime);
 #ifdef DEBUG_LOGOUT_ON
-            qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
-            qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", m_checksum_result.result(), elapsedtime);
+                qreal elapsedtime = (qreal)(ChecksummingTime)/1000;
+                qDebug("Checksum Result(0x%llX), TotalTime (%.2f) sec", m_futureWatcher.future().result(), elapsedtime);
 #endif
+            }
+            else{
+                qWarning("ChecksumProcesser::ChecksumProcesser() finish at error status!!!");
+            }
         }
 
         m_elapsedtime.invalidate();
@@ -195,7 +203,9 @@ void Checksumer::ChecksumProcesser()
 
 void Checksumer::ChecksumProcessCancel(void)
 {
-    qDebug("ChecksumProcessCancel Called~~~");
+#ifdef DEBUG_LOGOUT_ON
+    qDebug("ChecksumProcessCancel() Called~~~");
+#endif
 
     if (false == m_filepath.isEmpty()){
         QFileInfo fileInfo(m_filepath);
@@ -214,11 +224,17 @@ void Checksumer::ChecksumProcessCancel(void)
         }
 
         if ((CHECKSUMER_CHECKSUMMING == m_status)
-                && (true == m_checksum_result.isStarted())){
-            m_status = CHECKSUMER_CANCELED;
-            m_checksum_result.cancel();
+                && (true == m_futureWatcher.isStarted())){
+            m_futureWatcher.cancel();
         }
     }
+}
+
+void Checksumer::ChecksumProcessFinished(void)
+{
+#ifdef DEBUG_LOGOUT_ON
+    qDebug() << "Checksumer::ChecksumProcessFinished() Called~~~";
+#endif
 }
 
 Split_st Checksumer::splitChecksum(const Split_st &split)
