@@ -17,18 +17,33 @@ DEFINES += BRINGTO_FOREGROUND_ATFINISHED
 
 CONFIG(debug, debug|release){
     DEFINES += DEBUG_LOGOUT_ON
-    message("Debug Build")
+
+    contains(DEFINES, WIN64) {
+        message("WIN64 Debug Build")
+    } else {
+        message("WIN32 Debug Build")
+    }
 }
 
 CONFIG(release, debug|release){
-    message("Release Build")
+    contains(DEFINES, WIN64) {
+        message("WIN64 Release Build")
+    } else {
+        message("WIN32 Release Build")
+    }
 }
 
 contains( DEFINES, BRINGTO_FOREGROUND_ATFINISHED ) {
     message("contains BRINGTO_FOREGROUND_ATFINISHED")
-    DEFINES += _X86_
-    LIBS    += -L$$PWD/win32_libs
-    LIBS    += user32.lib
+
+    contains(DEFINES, WIN64) {
+    # Win x64 libs
+    LIBS        += -L$$PWD/win_lib/x64
+    } else {
+    # Win x86 libs
+    LIBS        += -L$$PWD/win_lib/x86
+    }
+    LIBS        += User32.lib
 }
 
 # The following define makes your compiler emit warnings if you use
@@ -41,32 +56,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
-
-LIBS    += -L$$PWD/win32_libs
-LIBS    += user32.lib
-
-win32 {
-    message("Win32 Platform")
-
-#    QMAKE_LFLAGS_CONSOLE -=/SUBSYSTEM:CONSOLE
-#    QMAKE_LFLAGS_WINDOWS -=/SUBSYSTEM:WINDOWS
-#    QMAKE_LFLAGS_CONSOLE +=/SUBSYSTEM:CONSOLE,5.01
-#    QMAKE_LFLAGS_WINDOWS +=/SUBSYSTEM:WINDOWS,5.01
-#    message("QMAKE_LFLAGS_CONSOLE: "$$QMAKE_LFLAGS_CONSOLE)
-#    message("QMAKE_LFLAGS_WINDOWS: "$$QMAKE_LFLAGS_WINDOWS)
-
-#    CONFIG += static
-
-#    QMAKE_CFLAGS_RELEASE    -= -MD
-#    QMAKE_CFLAGS_DEBUG      -= -MDd
-#    QMAKE_CXXFLAGS_RELEASE  -= -MD
-#    QMAKE_CXXFLAGS_DEBUG    -= -MDd
-
-#    QMAKE_CFLAGS_RELEASE    += -MT
-#    QMAKE_CFLAGS_DEBUG      += -MTd
-#    QMAKE_CXXFLAGS_RELEASE  += -MT
-#    QMAKE_CXXFLAGS_DEBUG    += -MTd
-}
 
 RC_FILE     += QChecksumer.rc
 
